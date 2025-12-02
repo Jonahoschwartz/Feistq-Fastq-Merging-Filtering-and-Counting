@@ -1,0 +1,23 @@
+request_cpus = 8
+request_memory = 100GB
+executable = processing_bulk.sh
+initialdir = ../data
+
+# File Transfer
+transfer_input_files = processing_bulk.sh, fastq_filter_reporter
+
+# Logs
+error = $(HEADER)_processing.err
+log   = $(HEADER)_processing.log
+output= $(HEADER)_processing.out
+
+# Flag parade
+FIVEPRIME_SEQUENCE = {PUT 5 PRIME SEQUENCE HERE}
+THREEPRIME_SEQUENCE = {PUT 3 PRIME SEQUENCE HERE}
+BARCODE_CONSTANT = {PUT BARCODE CONSTANT HERE}
+READ_THRESHOLD = 2
+
+# Passing flags to script, note the quoted HEADER
+arguments = -f $(FIVEPRIME_SEQUENCE) -b $(BARCODE_CONSTANT) -t $(THREEPRIME_SEQUENCE) -r $(READ_THRESHOLD) -i $(HEADER)
+
+queue HEADER from header.txt
