@@ -61,12 +61,16 @@ echo "Merging Started using fastp"
     -m --merged_out "${HEADER}_merged_reads.fastq" \
     --failed_out "${HEADER}_failed_reads.fastq" \
     -c --overlap_len_require 4 \
+    -j "${HEADER}_fastp.json" \
+    -h "${HEADER}_fastp.html" \
     --thread 8
 
 echo "Completed Merging"
 
 # Take merge data from fastp
-JSON_FILE="fastp.json"
+# Reports are named per sample so jobs running at the same time in the shared
+# data folder cannot overwrite or pick up each other's fastp.json/fastp.html
+JSON_FILE="${HEADER}_fastp.json"
 
 # Extract total_reads from the after_filtering section under summary
 total_reads=$(jq '.summary.after_filtering.total_reads // "No data found"' "$JSON_FILE")
@@ -135,8 +139,6 @@ mkdir -p "${HEADER}"
 rm "${HEADER}"*_001.fastq 
 
 # Move outputs into the results folder
-mv "fastp.json" "${HEADER}_fastp.json"
-mv "fastp.html" "${HEADER}_fastp.html"
 mv "${HEADER}_failed_reads.fastq" "${HEADER}/"
 mv "${HEADER}"* "${HEADER}/"
 

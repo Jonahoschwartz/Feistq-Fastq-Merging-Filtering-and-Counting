@@ -65,16 +65,57 @@ Each read pair generates its own directory containing:
 | File | Description |
 |------|-------------|
 | `*.fastq.gz` | Original zipped FASTQ files |
-| `*.html`, `*.json` | Fastp quality reports |
+| `*_fastp.html`, `*_fastp.json` | Fastp quality reports for that sample |
 | `*_failed_reads.fastq` | Reads that failed Fastp filtering |
 | `merged_reads.fastq` | Successfully merged reads from Fastp |
 | `read_distribution.txt` | Frequency distribution of read counts |
 | `trimmed_PCR_sequences.txt` | Reads after trimming primer sequences |
 | `counted_PCR_sequences.txt` | Trimmed sequences with count data |
-| `*_reads_above_threshold.txt` | High-confidence sequences (≥ threshold) |
-| `*_reads_below_threshold.txt` | Low-confidence sequences (< threshold) |
+| `*_reads_above_threshold.txt` | High-confidence sequences (more reads than the threshold) |
+| `*_reads_below_threshold.txt` | Low-confidence sequences (at or below the threshold) |
 
-Condor report files will be placed outside these directories.
+Condor report files (`*_processing.err`, `.log`, `.out`) are moved into each sample's directory along with its results.
+
+## Packaging Results for Download
+
+After all jobs finish (check with `condor_q`), run from the repo folder:
+
+```bash
+./prep_download.sh
+```
+
+This creates `download_package/` and `download_package.zip` containing:
+
+| File | Description |
+|------|-------------|
+| `reads_above_threshold/` | Every sample's `*_reads_above_threshold.txt` |
+| `fastp_reports/` | Every sample's fastp `.html` and `.json` report |
+| `QC_summary.tsv` | One row per sample with read counts at each pipeline step (opens in Excel) |
+| `README.txt` | Description of each QC column |
+
+Samples that failed or never ran are still listed in `QC_summary.tsv`, with a note explaining what is missing.
+
+Options: `-o NAME` for a different package name, `-d DIR` for a different data folder, `-i FILE` for a different header file, `-x` to leave out the fastp reports, `-f` to overwrite a previous package. Run `./prep_download.sh -h` for details.
+
+Download the zip from your own computer with:
+
+```bash
+scp [user]@scarcity-ap-1.glbrc.org:/full/path/to/repo/download_package.zip .
+```
+
+## Resetting the Pipeline
+
+To rerun the pipeline on the same data, run from the repo folder:
+
+```bash
+./reset_pipeline.sh -n    # dry run: lists every move and delete, changes nothing
+./reset_pipeline.sh       # asks you to type "yes" before changing anything
+condor_submit process.submit
+```
+
+This moves the original `*.fastq.gz` files out of each sample folder back into `data/`, then deletes the sample folders and any pipeline leftovers in `data/`. The `.fastq.gz` files, `fastq_filter_reporter`, and anything it does not recognise as pipeline output are never deleted. **All results are permanently deleted**, so run `./prep_download.sh` first if you want to keep them, and make sure no jobs are still running.
+
+Options: `-n` dry run, `-y` skip the confirmation, `-d DIR` for a different data folder.
 
 ## Troubleshooting
 
